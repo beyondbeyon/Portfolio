@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Portfolio</title>
+    <script type="importmap">
+        {
+          "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.module.js",
+            "three/examples/jsm/loaders/GLTFLoader.js": "https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/loaders/GLTFLoader.js"
+          }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {margin: 0;}
+        canvas { display: block; }
+
+        /* UI */
+        #controls, #idleBox {
+            font-family: 'Orbitron', sans-serif;
+            color: #00fff0;
+            text-shadow:
+                0 0 5px #00fff0,
+                0 0 10px #00fff0,
+                0 0 20px #00fff0,
+                0 0 40px #00fff0;
+        }
+
+        #controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 1000;
+        }
+
+        #idleBox {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px 50px;
+            border-radius: 15px;
+            font-size: 18px;
+            display: none;
+            text-align: center;
+            z-index: 1000;
+            animation: glowPulse 1.5s infinite alternate;
+        }
+
+        #landingPrompt {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00fff0;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            text-align: center;
+            text-shadow:
+                0 0 5px #00fff0,
+                0 0 10px #00fff0,
+                0 0 20px #00fff0,
+                0 0 40px #00fff0;
+            z-index: 1000;
+            animation: glowPulse 1.5s infinite alternate;
+        }
+
+        /* subtle pulsing glow animation */
+        @keyframes glowPulse {
+            0% { text-shadow: 0 0 5px #00fff0, 0 0 10px #00fff0, 0 0 20px #00fff0, 0 0 40px #00fff0; }
+            100% { text-shadow: 0 0 10px #00fff0, 0 0 20px #00fff0, 0 0 30px #00fff0, 0 0 60px #00fff0; }
+        }
+    </style>
+</head>
+<body>
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+
+        //Initialize the scene, camera, and renderer
+        const scene = new THREE.Scene();
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0,50,-100);
+        camera.lookAt(0,0,0);
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const planets = [];
+
+        let screenBounds = {};
+        function updateScreenBounds(){
+            screenBounds = {
+                minX: -window.innerWidth / 200,
+                maxX: window.innerWidth / 200,
+                minY: -window.innerHeight / 200,
+                maxY: window.innerHeight / 200,
+            };
+        }
+
+        window.addEventListener("resize", updateScreenBounds);
+        updateScreenBounds();
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(50, 50, -50);
+        scene.add(directionalLight);
+
+        //creating the spaceship
+        const spaceship = new THREE.Object3D();
+        scene.add(spaceship);
+
+        //Creat a buffer geometry to hold the star positions
+        const starsGeometry = new THREE.BufferGeometry();
+        const starVertices = [];
+
+        //Generate 5000 random star positions
+        for(let i = 0; i < 1000; i++){
+            let x = (Math.random() - 0.5) * 2000;
+            let y = (Math.random() - 0.5) * 2000;
+            let z = (Math.random() - 0.5) * 2000;
+            starVertices.push(x, y, z);
+        }
+
+        //Convert array into Three.js attribute
+        starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+
+        //Creat the star material (white glowing dots)
+        const startsMaterial = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 1.2,
+            transparent: true,
+            opacity: 0.8
+        });
+
+        //Create the star field object and add to scene
+        const starField = new THREE.Points(starsGeometry, startsMaterial);
+        scene.add(starField);
+
+        //Create a group of asteroids
+        const asteroidGroup = new THREE.Group();
+        scene.add(asteroidGroup);
+
+        let asteroidModel;
+        const loader = new GLTFLoader();
+        /*
+        loader.load('assets/asteroid.glb', (gltf) => {
+            asteroidModel = gltf.scene;
+            console.log('Asteroid model loaded');
+
+            for(let i = 0; i < 6; i++){
+                let asteroid = createAsteroid()
+                if(asteroid){
+                    asteroidGroup.add(asteroid);
+                    console.log(asteroid.position)
+                }
+            }
+
+            scene.add(asteroidGroup);
+        }, undefined, (error) => {
+            console.error('Error loading asteroid model:', error);
+        })
+        */
+
+       loader.load('assets/Ship.glb', (gltf) => {
+            const Ship = gltf.scene;
+            spaceship.add(Ship);
+            Ship.scale.set(3, 3, 3);
+            Ship.rotation.y = Math.PI/2;
+        }, undefined, (error) => {
+            console.error('Error loading Ship model:', error);
+        });
+
+        loader.load('assets/Boost.glb', (gltf) => {
+            const Boost = gltf.scene;
+            spaceship.add(Boost);
+            Boost.scale.set(5, 5, 5);
+            Boost.position.set(0, 0, 12.7);
+            Boost.rotation.y = -Math.PI / 2 ;
+
+            spaceship.userData.boost = Boost;
+            Boost.visible = false;
+        }, undefined, (error) => {
+            console.error('Error loading boost model:', error);
+        });
+
+
+        loader.load('assets/CMPM_121.glb', (gltf) => {
+            const CatPlanet = gltf.scene;
+            CatPlanet.name = "CatPlanet";
+            CatPlanet.position.set(0, 0, 400);
+            CatPlanet.scale.set(30, 30, 30)
+            scene.add(CatPlanet);
+            planets.push(CatPlanet);
+            
+            function spin() {
+                requestAnimationFrame(spin);
+                CatPlanet.rotation.y += 0.001; // slow spin
+                renderer.render(scene, camera);
+            }
+            //spin();
+            
+
+        }, undefined, (error) => {
+            console.error('Error loading CatPlanet model:', error);
+        });
+
+        
+
+        loader.load('assets/Capstone_planet.glb', (gltf) => {
+            const CapPlanet = gltf.scene;
+            CapPlanet.name = "CapPlanet";
+            CapPlanet.position.set(300, 0, 200);
+            CapPlanet.scale.set(30, 30, 30)
+            scene.add(CapPlanet);
+            planets.push(CapPlanet);
+
+            function spin() {
+                requestAnimationFrame(spin);
+                CapPlanet.rotation.y += 0.001; // slow spin
+                renderer.render(scene, camera);
+            }
+            //spin();
+
+        }, undefined, (error) => {
+            console.error('Error loading CapPlanet model:', error);
+        });
+
+        //Add a basice cube to the scene(placeholder for the spaceship)
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshBasicMaterial({color : 0x00ff00 });
+        //const cube = new THREE.Mesh(geometry, material);
+        //spaceship.add(cube);
+
+        /*
+        const boostGeometry = new THREE.BoxGeometry(0.5, 0.5, 2);
+        const boostmaterial = new THREE.MeshBasicMaterial({color: 0xff5500 });
+        const boost = new THREE.Mesh(boostGeometry, boostmaterial);
+        boost.rotation.x = Math.PI; //Postion the boost at the back of the spaceship
+        //boost.position.z = -1.2;
+        spaceship.add(boost);
+        //boost.position.set(0, 0, 1);
+        boost.visible = false; //boost is hidden by default
+        */
+
+        //Set the camera postistion
+        camera.position.z = 5;
+
+        //Handle window resizing
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
+
+        //Movement varibles
+        let keys = {}
+        let boostActive = false;
+        let normalspeed = 0.5; 
+        let boostMultipler = 2; 
+        let rotationSpeed = 0.02; 
+        let moveSpeed = normalspeed;
+
+        //Landing variables
+        const landingRadius = 50;
+        let nearPlanet = null;
+        let isLanding = false;
+        let landingStartTime = 0;
+
+        let idleTime = 0;
+
+        const planetLinks = {
+            CatPlanet : "https://beyondbeyon.github.io/121Web_build/",
+            CapPlanet : "https://beyondbeyon.github.io/Download-page/"
+        };
+
+        //UI prompt
+        const landingPrompt = document.createElement("div");
+        landingPrompt.id = "landingPrompt";
+        landingPrompt.style.display = "none";
+        landingPrompt.innerText = "Press SPACE to land";
+        document.body.appendChild(landingPrompt);
+
+        setInterval(() => {
+            idleTime++;
+            if(idleTime >= 10){
+                document.getElementById('idleBox').style.display = 'block';
+            }
+        }, 1000);
+
+        //Keyboard controls
+        document.addEventListener('keydown', (event) => {
+            keys[event.key.toLowerCase()] = true;
+
+            if(event.key === "Shift"){
+                boostActive = true; 
+            }
+        });
+
+        document.addEventListener('keyup', (event) => {
+            keys[event.key.toLowerCase()] = false;
+
+            if(event.key === "Shift"){
+                boostActive = false; 
+            }
+        });
+
+        window.addEventListener("keydown", (event) => {
+            if(event.code === "Space" && nearPlanet && !isLanding){
+                const planet = nearPlanet;
+                const link = planetLinks[planet.name];
+                console.log("=== LANDING DEBUG ===");
+                console.log("Planet object:", planet);
+                console.log("Planet name:", planet.name);
+                console.log("Link found:", link);
+
+                if (!link) {
+                console.warn(" No link found for planet:", planet.name);
+                return;
+                }
+
+                spaceship.userData.pendingTab = window.open(
+                    link,
+                    "_blank",
+                    "noopener,noreferrer"
+                );
+
+                if (spaceship.userData.pendingTab) {
+                    spaceship.userData.pendingTab.blur();
+                    window.focus(); 
+                }
+
+                // Start the landing animation
+                startLanding(planet, link);
+            }
+        });
+        window.addEventListener('mosemove', resetIdle);
+        window.addEventListener('keydown', resetIdle);
+
+        function resetIdle(){
+            idleTime = 0;
+            document.getElementById('idleBox').style.display = 'none';
+        }
+
+        function startLanding(planet, link){
+            isLanding = true;
+            landingStartTime = performance.now();
+            landingPrompt.style.display = "none";
+
+            const duration = 5000;
+            const startScale = spaceship.scale.clone();
+            const endScale = new THREE.Vector3(0.001, 0.001, 0.001);
+
+            const startPos = spaceship.position.clone();
+
+            const direction = new THREE.Vector3()
+                .subVectors(planet.position, spaceship.position)
+                .normalize();
+
+            const stopDistance = 40;
+            const endPos = planet.position.clone().addScaledVector(direction, -stopDistance)
+            
+
+            function animateLanding(time){
+                const elapsed = time - landingStartTime;
+                const t = Math.min(elapsed / duration, 1);
+
+                spaceship.scale.lerpVectors(startScale, endScale, t);
+                spaceship.position.lerpVectors(startPos, endPos, t);
+
+                if(t < 1){
+                    requestAnimationFrame(animateLanding);
+                } else {
+                    if(link && spaceship.userData.pendingTab){
+                        setTimeout(() => window.focus(), 100);
+                        spaceship.userData.pendingTab.location.href = link;
+                        spaceship.userData.pendingTab = null;
+                    }
+
+                    spaceship.scale.copy(startScale);
+                    isLanding = false;
+
+                    //if (onComplete) onComplete();
+                }
+            }
+            requestAnimationFrame(animateLanding);
+        }
+
+        function createAsteroid(){
+            if(!asteroidModel){
+                console.error("Asteroid model not loaded yet!");
+                return;
+            }
+
+            const minSize = 5;
+            const maxSize = 15;
+            const radius = Math.random() * (maxSize - minSize) + minSize;
+            console.log("Asteroid radius:", radius);
+
+            const asteroid = asteroidModel.clone();
+
+            asteroid.position.set(
+                (Math.random() - 0.5) * 1000,
+                (Math.random() - 0.5) * 1000,
+                (Math.random() - 0.5) * 1000,
+            );
+
+            asteroid.userData.rotationSpeed = new THREE.Vector3(
+                Math.random() * 0.01,
+                Math.random() * 0.01,
+                Math.random() * 0.01
+            );
+
+            asteroid.scale.set(radius, radius, radius);
+
+            return asteroid;
+        }
+
+        function updateCamera() {
+            const transitionSpeed = 0.05; 
+
+            let dynamicOffset = new THREE.Vector3(0,5,-20);
+
+            if(boostActive){
+                dynamicOffset.y += 5; //Move higher
+                dynamicOffset.z -= 10; //Move further back
+            }
+
+            //Target position slightly above and behind the player
+            const targetPosition = spaceship.position.clone().add(dynamicOffset);
+
+            //Smoothly transition camera to target
+            camera.position.lerp(targetPosition, transitionSpeed);
+
+            camera.lookAt(spaceship.position);
+        }
+
+        let zoomLevel = 5;
+        const minZoom = 2;
+        const maxZoom = 10;
+
+        //NOT BEING USED
+        function updateZoom(){ 
+            let offset = new THREE.Vector3(0, zoomLevel, -zoomLevel * 2);
+            camera.position.copy(spaceship.position.clone().add(offset));
+            camera.lookAt(spaceship.position);
+        }
+
+        //NOT BEING USED
+        function constrainPosition(){
+            spaceship.position.x = Math.max(screenBounds.minX, Math.min(screenBounds.maxX, spaceship.position.x));
+            spaceship.position.y = Math.max(screenBounds.minY, Math.min(screenBounds.maxY, spaceship.position.y));
+        }
+
+        function lerpAngle(a, b, t) {
+            let delta = b - a;
+            delta = Math.atan2(Math.sin(delta), Math.cos(delta)); // Wrap-around handling
+            return a + delta * t;
+        }
+
+        let movementVector = new THREE.Vector3(); // Movement vector
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Reset movement vector
+            movementVector.set(0, 0, 0);
+
+            // Apply movement based on key inputs
+            if (keys['w']) movementVector.z -= 1;
+            if (keys['s']) movementVector.z += 1;
+            if (keys['a']) movementVector.x -= 1;
+            if (keys['d']) movementVector.x += 1;
+            if (keys['r']) movementVector.y += 1;  // Up movement
+            if (keys['f']) movementVector.y -= 1;  // Down movement
+
+            let currentSpeed = normalspeed;
+            if(boostActive) currentSpeed *= boostMultipler;
+
+            if(movementVector.lengthSq() > 0) {
+                movementVector.normalize();
+
+                // Rotation towards movement direction
+                let targetRotation = Math.atan2(movementVector.x, movementVector.z);
+                spaceship.rotation.y = lerpAngle(spaceship.rotation.y, targetRotation, 0.1);
+
+                // Apply the movement based on spaceship's current rotation
+                let forward = new THREE.Vector3(0, 0, -1);  // Forward direction
+                forward.applyQuaternion(spaceship.quaternion);  // Apply current rotation
+
+                // Apply the movement
+                spaceship.position.addScaledVector(forward, currentSpeed);  // Move along Z axis (forward/backward)
+                spaceship.position.addScaledVector(new THREE.Vector3(0, 1, 0), movementVector.y * currentSpeed); // Move along Y axis (up/down)
+            }
+
+            if(!isLanding){
+                nearPlanet = null;
+
+                planets.forEach((planet) => {
+                    const distance = spaceship.position.distanceTo(planet.position);
+                    if(distance < landingRadius){
+                        nearPlanet = planet;
+                    }
+                });
+
+                landingPrompt.style.display = nearPlanet ? "block" : "none";
+            }
+
+            // Update boost position
+            //spaceship.userData.boost.position.set(0, 0, 1.5);
+            if (spaceship.userData.boost) {
+                spaceship.userData.boost.visible = boostActive;
+            }
+            /*
+            // Simulate star movement
+            starField.rotation.y += 0.0002;
+            starField.rotation.x += 0.0001;
+            */
+
+            // Update camera position
+            updateCamera(); // Keep the camera following the spaceship
+
+            // Render the scene
+            renderer.render(scene, camera);
+        }
+        animate();
+    
+    </script>
+
+    <div id="controls">
+        <p>W/S: Forward/Backward | A/D: Left/Right | R/F: Rise/Fall | Shift: Boost</p>
+    </div>
+
+    <div id="idleBox">
+        <p>Name: Bryon Anderson</p>
+        <p>Email: BryonAnderson594@example.com</p>
+    </div>
+</body>
+</html>
