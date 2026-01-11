@@ -174,7 +174,7 @@
         })
         */
 
-       loader.load('assets/Ship.glb', (gltf) => {
+       loader.load('https://beyondbeyon.itch.io/welp-here-goes/Ship.glb', (gltf) => {
             const Ship = gltf.scene;
             spaceship.add(Ship);
             Ship.scale.set(3, 3, 3);
@@ -183,7 +183,7 @@
             console.error('Error loading Ship model:', error);
         });
 
-        loader.load('assets/Boost.glb', (gltf) => {
+        loader.load('https://beyondbeyon.itch.io/welp-here-goes/boost.glb', (gltf) => {
             const Boost = gltf.scene;
             spaceship.add(Boost);
             Boost.scale.set(5, 5, 5);
@@ -197,7 +197,7 @@
         });
 
 
-        loader.load('assets/CMPM_121.glb', (gltf) => {
+        loader.load('https://beyondbeyon.itch.io/welp-here-goes/CMPM_121.glb', (gltf) => {
             const CatPlanet = gltf.scene;
             CatPlanet.name = "CatPlanet";
             CatPlanet.position.set(0, 0, 400);
@@ -219,7 +219,7 @@
 
         
 
-        loader.load('assets/Capstone_planet.glb', (gltf) => {
+        loader.load('https://beyondbeyon.itch.io/welp-here-goes/Capstone_planet.glb', (gltf) => {
             const CapPlanet = gltf.scene;
             CapPlanet.name = "CapPlanet";
             CapPlanet.position.set(300, 0, 200);
