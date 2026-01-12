@@ -83,7 +83,13 @@
 <body>
     <script type="module">
         import * as THREE from 'three';
-        import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+        import { DRACOLoader } from './three.js/examples/jsm/loaders/DRACOLoader.js';
+
+        const loader = new GLTFLoader();
+
+        const dracoLoader = new DRACOLoader();
+        dracoLoader.setDecoderPath('./draco/');
+        loader.setDRACOLoader(dracoLoader);
 
         //Initialize the scene, camera, and renderer
         const scene = new THREE.Scene();
@@ -154,7 +160,6 @@
         scene.add(asteroidGroup);
 
         let asteroidModel;
-        const loader = new GLTFLoader();
         /*
         loader.load('assets/asteroid.glb', (gltf) => {
             asteroidModel = gltf.scene;
@@ -183,7 +188,7 @@
             console.error('Error loading Ship model:', error);
         });
 
-        loader.load('assets/Boost.glb', (gltf) => {
+        loader.load('assets/boost.glb', (gltf) => {
             const Boost = gltf.scene;
             spaceship.add(Boost);
             Boost.scale.set(5, 5, 5);
