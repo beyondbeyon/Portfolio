@@ -8,7 +8,7 @@
         {
           "imports": {
             "three": "https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.module.js",
-            "three/examples/jsm/loaders/GLTFLoader.js": "https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/loaders/GLTFLoader.js",
+            "GLTFLoader": "https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/loaders/GLTFLoader.js",
             "DRACOLoader": "https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/loaders/DRACOLoader.js"
           }
         }
@@ -84,13 +84,13 @@
 <body>
     <script type="module">
         import * as THREE from 'three';
-        import { GLTFLoader } from './three.js/examples/jsm/loaders/GLTFLoader.js';
-        import { DRACOLoader } from './three.js/examples/jsm/loaders/DRACOLoader.js';
+        import { GLTFLoader } from 'GLTFLoader';
+        import { DRACOLoader } from 'DRACOLoader';
 
         const loader = new GLTFLoader();
 
         const dracoLoader = new DRACOLoader();
-        dracoLoader.setDecoderPath('./draco/');
+        dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
         loader.setDRACOLoader(dracoLoader);
         
 
