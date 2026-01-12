@@ -83,13 +83,15 @@
 <body>
     <script type="module">
         import * as THREE from 'three';
-        import { DRACOLoader } from './three.js/examples/jsm/loaders/DRACOLoader.js';
+        import { GLTFLoader } from './three.js/examples/jsm/loaders/GLTFLoader.js';
+        import { DRACOLoader } from './assets/draco/DRACOLoader.js';
 
         const loader = new GLTFLoader();
 
         const dracoLoader = new DRACOLoader();
         dracoLoader.setDecoderPath('./draco/');
         loader.setDRACOLoader(dracoLoader);
+        
 
         //Initialize the scene, camera, and renderer
         const scene = new THREE.Scene();
